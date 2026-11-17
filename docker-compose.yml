@@ -1,0 +1,67 @@
+services:
+  # Base de Datos Oracle Database 23c / 19c Free
+  oracle-db:
+    image: gvenzl/oracle-free:latest
+    container_name: geovision-oracle
+    restart: unless-stopped
+    ports:
+      - "1522:1521"
+    environment:
+      ORACLE_PASSWORD: ${DB_PASSWORD:-123456}
+      APP_USER: ${DB_USERNAME:-geovisionBackEnd}
+      APP_USER_PASSWORD: ${DB_PASSWORD:-123456}
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+      - ./geovisionBackEnd/database/DDL_GeoVision_Oracle19c_corregido.sql:/container-entrypoint-initdb.d/01_ddl.sql:ro
+      - ./geovisionBackEnd/database/02_seed_data_geovision.sql:/container-entrypoint-initdb.d/02_seed.sql:ro
+    networks:
+      - geovision-network
+
+  # Backend Spring Boot 4 / Java 21
+  backend:
+    build:
+      context: ./geovisionBackEnd
+      dockerfile: Dockerfile
+    container_name: geovision-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_PORT: 8080
+      DB_URL: jdbc:oracle:thin:@oracle-db:1521/FREEPDB1
+      DB_USERNAME: ${DB_USERNAME:-geovisionBackEnd}
+      DB_PASSWORD: ${DB_PASSWORD:-123456}
+      JWT_SECRET: ${JWT_SECRET:-w9Z6dP/dzykNH/uiI3Z/KGjBlP0H4Ji+Tuq4fm2cTNuLD4jWafu1gBL74V2SJEvy}
+      JWT_EXPIRACION_MINUTOS: ${JWT_EXPIRACION_MINUTOS:-480}
+      CORS_ALLOWED_ORIGINS: "*"
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-}
+      MP_USER_ID: ${MP_USER_ID:-}
+      MP_POS_ID: ${MP_POS_ID:-CAJAPRINCIPAL01}
+      MP_WEBHOOK_URL: ${MP_WEBHOOK_URL:-}
+    depends_on:
+      - oracle-db
+    networks:
+      - geovision-network
+
+  # Frontend Angular 22 servido con Nginx
+  frontend:
+    build:
+      context: ./geovisionFrontEnd
+      dockerfile: Dockerfile
+    container_name: geovision-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - geovision-network
+
+networks:
+  geovision-network:
+    driver: bridge
+
+volumes:
+  oracle-data:
+    driver: local
