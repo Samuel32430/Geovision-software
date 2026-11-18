@@ -1,3 +1,5 @@
+https://app.diagrams.net/#G1m20QiBQIU0fcqSLxpMV504CpkEjWTtnn#%7B%22pageId%22%3A%22EP-gMXBnL4OE9nRrcQ1K%22%7D
+
 # GeoVision Software
 
 Sistema integral de gestión óptica y optometría con arquitectura desacoplada: Frontend SPA en **Angular 22**, Backend API REST en **Spring Boot 4 / Java 21**, y Base de Datos **Oracle Database 23c / 19c**.
